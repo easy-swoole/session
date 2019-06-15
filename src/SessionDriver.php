@@ -69,6 +69,8 @@ class SessionDriver
         $cookie = $this->request->getCookieParams($this->sessionName);
         if(empty($cookie)){
             $this->sessionId = md5(microtime(true) . $this->request->getSwooleRequest()->fd);
+        }else{
+            $this->sessionId = $cookie;
         }
         if($cookie != $this->sessionId){
             $this->request->withCookieParams([
