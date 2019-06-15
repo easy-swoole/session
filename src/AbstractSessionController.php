@@ -10,12 +10,12 @@ abstract class AbstractSessionController extends Controller
 {
     private $session;
 
-    protected abstract function sessionConfig():Config;
+    protected abstract function sessionHandler():\SessionHandlerInterface;
 
-    protected function session(): Session
+    protected function session(): SessionDriver
     {
         if($this->session == null){
-            $this->session = new Session($this->sessionConfig()->getHandler());
+            $this->session = new SessionDriver($this->sessionHandler(),$this->request(),$this->response());
         }
         return $this->session;
     }
