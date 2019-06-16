@@ -87,6 +87,9 @@ class SessionDriver
         $data = $this->handler->read($this->sessionId);
         if(!empty($data)){
             $this->sessionData = unserialize($data);
+            if(!is_array($this->sessionData)){
+                $this->sessionData = [];
+            }
         }else{
             $this->sessionData = [];
         }
