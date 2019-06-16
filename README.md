@@ -2,14 +2,11 @@
 测试代码
 
 ```
-namespace App\HttpController;
-
-require_once 'vendor/autoload.php';
-
+use EasySwoole\Session\FileSessionHandler;
 use EasySwoole\Session\Test\RedisHandler;
 use EasySwoole\Session\AbstractSessionController;
 
-class Index extends AbstractSessionController
+class Redis extends AbstractSessionController
 {
 
     protected function sessionHandler(): \SessionHandlerInterface
@@ -35,6 +32,26 @@ class Index extends AbstractSessionController
     }
 }
 
+class Index extends AbstractSessionController
+{
+
+    protected function sessionHandler(): \SessionHandlerInterface
+    {
+        return new FileSessionHandler();
+    }
+
+    function index()
+    {
+        $this->session()->start();
+        $time = $this->session()->get('test');
+        if($time){
+            $this->response()->write('session time is '.$time);
+        }else{
+            $this->session()->set('test',time());
+            $this->response()->write('session time is new set');
+        }
+    }
+}
 
 $http = new \swoole_http_server("0.0.0.0", 9501);
 $http->set([
@@ -50,3 +67,5 @@ $http->on("request", function ($request, $response)use($service) {
 
 $http->start();
 ```
+
+> 自带的文件session实现是无锁的

@@ -25,7 +25,7 @@ class SessionDriver
         $this->handler = $sessionHandler;
         $this->request = $request;
         $this->response = $response;
-        $this->savePath = sys_get_temp_dir();
+        $this->savePath = sys_get_temp_dir().'/Session';
     }
 
 
@@ -79,11 +79,6 @@ class SessionDriver
         if($this->isStart){
             return true;
         }
-        mt_srand();
-        $i = rand(0,100);
-        if($i < $this->gcProbability){
-            $this->handler->gc($this->gcMaxLifetime);
-        }
         if(!empty($sessionId)){
             $this->sessionId = $sessionId;
         }
@@ -117,6 +112,11 @@ class SessionDriver
             }
         }else{
             $this->sessionData = [];
+        }
+        mt_srand();
+        $i = rand(0,100);
+        if($i < $this->gcProbability){
+            $this->handler->gc($this->gcMaxLifetime);
         }
         return $this->isStart;
     }

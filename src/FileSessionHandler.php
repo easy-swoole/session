@@ -32,13 +32,24 @@ class FileSessionHandler implements \SessionHandlerInterface
 
     public function gc($maxlifetime)
     {
-
+        $dir_handle = openDir($this->savePath);
+        while(false !== $file = readDir($dir_handle)) {
+            if ($file == '.' || $file == '..') continue;
+            $file = "{$this->savePath}/{$file}";
+            if(time() - filemtime($file) > $maxlifetime){
+                unlink($file);
+            }
+        }
+        closeDir($dir_handle);
     }
 
     public function open($save_path, $name)
     {
        $this->savePath = $save_path;
        $this->name = $name;
+       if(!is_dir($save_path)){
+           return mkdir($save_path);
+       }
        return true;
     }
 
