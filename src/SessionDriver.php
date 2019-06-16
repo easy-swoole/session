@@ -13,16 +13,36 @@ class SessionDriver
     private $sessionName = 'ESSession';
     private $sessionId;
     private $isStart = false;
-    private $savePath = '/';
+    private $savePath;
     private $sessionData;
     private $request;
     private $response;
+    private $gcMaxLifetime = 1440;
+    private $gcProbability = 1;
 
     function __construct(\SessionHandlerInterface $sessionHandler,Request $request,Response $response)
     {
         $this->handler = $sessionHandler;
         $this->request = $request;
         $this->response = $response;
+        $this->savePath = sys_get_temp_dir();
+    }
+
+
+    function gcMaxLifetime(int $maxlifetime = null)
+    {
+        if($maxlifetime != null){
+            $this->gcMaxLifetime = $maxlifetime;
+        }
+        return $this->gcMaxLifetime;
+    }
+
+    function gcProbability(int $gcProbability = null)
+    {
+        if($gcProbability !== null){
+            $this->gcProbability = $gcProbability;
+        }
+        return $this->gcProbability;
     }
 
     /*
@@ -58,6 +78,11 @@ class SessionDriver
     {
         if($this->isStart){
             return true;
+        }
+        mt_srand();
+        $i = rand(0,100);
+        if($i < $this->gcProbability){
+            $this->handler->gc($this->gcMaxLifetime);
         }
         if(!empty($sessionId)){
             $this->sessionId = $sessionId;
