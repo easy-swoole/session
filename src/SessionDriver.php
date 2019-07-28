@@ -88,8 +88,16 @@ class SessionDriver
          */
         $cookie = $this->request->getCookieParams($this->sessionName);
         if(empty($cookie)){
-            $this->sessionId = md5(microtime(true) . $this->request->getSwooleRequest()->fd);
-        }else{
+            /*
+             * 未指定
+             */
+            if(empty($this->sessionId)){
+                $this->sessionId = md5(microtime(true) . $this->request->getSwooleRequest()->fd);
+            }
+            /*
+             * 未指定
+             */
+        }else if(empty($this->sessionId)){
             $this->sessionId = $cookie;
         }
         if($cookie != $this->sessionId){
