@@ -14,9 +14,9 @@ class Session
 
     function setStorageHandler(StorageInterface $storage)
     {
-
+        $this->handler = $storage;
+        return $this;
     }
-
 
     public static function getInstance():Session
     {
@@ -28,6 +28,21 @@ class Session
     }
 
     function token()
+    {
+
+    }
+
+    function set($key,$data)
+    {
+
+    }
+
+    function get($key)
+    {
+
+    }
+
+    function close()
     {
 
     }
