@@ -20,9 +20,10 @@ class Session
     private $autoClear = true;
     private $savePath = 'es_session';
     private $name = 'es_session_name';
-    private $gc_cycle_times = 10000;
+    private $gc_cycle_times = 50000;
     private $callTimes = 0;
     private $onClose;
+    private $onStart;
 
     function __construct(\SessionHandlerInterface $storage)
     {
@@ -42,6 +43,12 @@ class Session
     function setOnClose(callable $call)
     {
         $this->onClose = $call;
+        return $this;
+    }
+
+    function setOnStart(callable $call)
+    {
+        $this->onStart = $call;
         return $this;
     }
 
@@ -125,6 +132,9 @@ class Session
     function start()
     {
         if(!$this->sessionConfigContext['isStart']){
+            if($this->onStart){
+                call_user_func($this->onStart,$this);
+            }
             //gc准确计数
             $this->callTimes++;
             if($this->gc_cycle_times && $this->callTimes > $this->gc_cycle_times){
@@ -161,6 +171,7 @@ class Session
 
     function gc():Session
     {
+        $this->start();
         $this->handler->gc($this->maxLifeTime);
         return $this;
     }
