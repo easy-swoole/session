@@ -22,6 +22,7 @@ class Session
     private $name = 'es_session_name';
     private $gc_cycle_times = 10000;
     private $callTimes = 0;
+    private $onClose;
 
     function __construct(\SessionHandlerInterface $storage)
     {
@@ -30,12 +31,18 @@ class Session
         $this->sessionConfigContext = new SplContextArray(false);
     }
 
-    public static function getInstance(...$args):Session
+    public static function getInstance(...$args)
     {
         if(!isset(self::$instance)){
             self::$instance = new static(...$args);
         }
         return self::$instance;
+    }
+
+    function setOnClose(callable $call)
+    {
+        $this->onClose = $call;
+        return $this;
     }
 
     function sessionId(string $sid = null):string
@@ -97,6 +104,9 @@ class Session
     {
         try{
             if($this->sessionConfigContext['isStart']){
+                if($this->onClose){
+                    call_user_func($this->onClose,$this);
+                }
                 if(!$this->sessionConfigContext['destroy']){
                     $data = $this->sessionDataContext->toArray();
                     $this->handler->write($this->sessionId(),serialize($data));
