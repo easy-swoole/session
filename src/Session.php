@@ -161,4 +161,9 @@ class Session
         return $this;
     }
 
+    function getContextArray():SplContextArray
+    {
+        return $this->sessionDataContext;
+    }
+
 }
