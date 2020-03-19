@@ -187,4 +187,8 @@ class Session
         return $this->sessionDataContext;
     }
 
+    function setAutoClear(bool $ret)
+    {
+        $this->autoClear = $ret;
+    }
 }
