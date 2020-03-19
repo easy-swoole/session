@@ -80,6 +80,7 @@ class SessionFileHandler implements \SessionHandlerInterface
         $stream->lock();
         try{
             $stream->truncate();
+            $stream->seek(0);
             $stream->write($session_data);
         }catch (\Throwable $throwable){
             throw $throwable;
@@ -96,7 +97,7 @@ class SessionFileHandler implements \SessionHandlerInterface
     {
         $file = "{$this->contextArray['path']}/{$session_id}";
         if(!$this->contextArray['stream']){
-            $stream = new SplFileStream($file,'w');
+            $stream = new SplFileStream($file,'c+');
             $this->contextArray['stream'] = $stream;
         }else{
             $stream = $this->contextArray['stream'];
