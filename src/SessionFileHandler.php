@@ -11,7 +11,7 @@ use EasySwoole\Spl\SplFileStream;
 class SessionFileHandler implements \SessionHandlerInterface
 {
     private $temp;
-    private $pathContext;
+    private $contextArray;
 
     function __construct(?string $tempDir = null)
     {
@@ -20,7 +20,7 @@ class SessionFileHandler implements \SessionHandlerInterface
             $tempDir = sys_get_temp_dir();
         }
         $this->temp = $tempDir;
-        $this->pathContext = new SplContextArray(true);
+        $this->contextArray = new SplContextArray(false);
     }
 
     public function close()
@@ -30,31 +30,33 @@ class SessionFileHandler implements \SessionHandlerInterface
 
     public function destroy($session_id)
     {
-        $file = "{$this->pathContext['path']}/{$session_id}";
-        $stream = new SplFileStream($file);
+        $stream = $this->getStream($session_id);
+        ChannelLock::getInstance()->lock($session_id);
         $stream->lock();
-        ChannelLock::getInstance()->lock($file);
         try{
+            $file = "{$this->contextArray['path']}/{$session_id}";
             unlink($file);
         }catch (\Throwable $throwable){
             throw $throwable;
         }finally{
             $stream->unlock();
-            ChannelLock::getInstance()->unlock($file);
             $stream->close();
+            ChannelLock::getInstance()->unlock($session_id);
+            unset($this->contextArray['path']);
+            unset($this->contextArray['stream']);
         }
         return true;
     }
 
     public function gc($maxlifetime)
     {
-        // TODO: Implement gc() method.
+        //空实现
     }
 
     public function open($save_path, $name)
     {
         $dir = $this->temp.'/'.$save_path;
-        $this->pathContext['path'] = $dir;
+        $this->contextArray['path'] = $dir;
         if(!is_dir($dir)){
             return mkdir($this->temp.'/'.$save_path,0777,true);
         }
@@ -63,28 +65,18 @@ class SessionFileHandler implements \SessionHandlerInterface
 
     public function read($session_id)
     {
-        $ret = '';
-        $file = "{$this->pathContext['path']}/{$session_id}";
-        $stream = new SplFileStream($file);
+        $stream = $this->getStream($session_id);
+        //防止请求落同进程
+        ChannelLock::getInstance()->lock($session_id);
         $stream->lock();
-        try{
-            $ret = $stream->__toString();
-        }catch (\Throwable $throwable){
-            throw $throwable;
-        }finally{
-            $stream->unlock();
-            ChannelLock::getInstance()->unlock($file);
-            $stream->close();
-        }
-        return $ret;
+        return $stream->__toString();
     }
 
     public function write($session_id, $session_data)
     {
-        $file = "{$this->pathContext['path']}/{$session_id}";
-        $stream = new SplFileStream($file);
+        $stream = $this->getStream($session_id);
+        ChannelLock::getInstance()->lock($session_id);
         $stream->lock();
-        ChannelLock::getInstance()->lock($file);
         try{
             $stream->truncate();
             $stream->write($session_data);
@@ -92,8 +84,22 @@ class SessionFileHandler implements \SessionHandlerInterface
             throw $throwable;
         }finally{
             $stream->unlock();
-            ChannelLock::getInstance()->unlock($file);
             $stream->close();
+            ChannelLock::getInstance()->unlock($session_id);
+            unset($this->contextArray['path']);
+            unset($this->contextArray['stream']);
         }
+    }
+
+    private function getStream(string $session_id)
+    {
+        $file = "{$this->contextArray['path']}/{$session_id}";
+        if(!$this->contextArray['stream']){
+            $stream = new SplFileStream($file,'w');
+            $this->contextArray['stream'] = $stream;
+        }else{
+            $stream = $this->contextArray['stream'];
+        }
+        return $stream;
     }
 }
