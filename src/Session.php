@@ -18,15 +18,17 @@ class Session
     private $sessionDataContext;
     private $sessionConfigContext;
     private $autoClear = true;
-    private $savePath = 'es_session';
-    private $name = 'es_session_name';
+    private $savePath;
+    private $name;
     private $gc_cycle_times = 50000;
     private $callTimes = 0;
     private $onClose;
     private $onStart;
 
-    function __construct(\SessionHandlerInterface $storage)
+    function __construct(\SessionHandlerInterface $storage,$sessionName = 'easy_session',$savePath = '/')
     {
+        $this->name = $sessionName;
+        $this->savePath = $savePath;
         $this->handler = $storage;
         $this->sessionDataContext = new SplContextArray(false);
         $this->sessionConfigContext = new SplContextArray(false);

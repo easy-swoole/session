@@ -55,6 +55,7 @@ class SessionFileHandler implements \SessionHandlerInterface
 
     public function open($save_path, $name)
     {
+        $save_path = trim($save_path,'/');
         $dir = $this->temp.'/'.$save_path;
         $this->contextArray['path'] = $dir;
         if(!is_dir($dir)){
