@@ -134,9 +134,7 @@ class Session
     function start()
     {
         if(!$this->sessionConfigContext['isStart']){
-            if($this->onStart){
-                call_user_func($this->onStart,$this);
-            }
+
             //gc准确计数
             $this->callTimes++;
             if($this->gc_cycle_times && $this->callTimes > $this->gc_cycle_times){
@@ -157,6 +155,9 @@ class Session
                     }
                 }
                 $this->sessionConfigContext['isStart'] = true;
+                if($this->onStart){
+                    call_user_func($this->onStart,$this);
+                }
             }catch (\Throwable $throwable){
                 //防止context内存泄漏
                 $this->writeClose();
