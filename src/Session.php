@@ -181,7 +181,7 @@ class Session
 
     function setMaxLiftTime(int $ttl):Session
     {
-        $this->maxLifeTime = $this;
+        $this->maxLifeTime = $ttl;
         return $this;
     }
 
