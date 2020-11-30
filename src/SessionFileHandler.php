@@ -66,11 +66,21 @@ class SessionFileHandler implements \SessionHandlerInterface
 
     public function read($session_id)
     {
-        $stream = $this->getStream($session_id);
-        //防止请求落同进程
-        ChannelLock::getInstance()->lock($session_id);
-        $stream->lock();
-        return $stream->__toString();
+        try {
+            $stream = $this->getStream($session_id);
+            //防止请求落同进程
+            ChannelLock::getInstance()->lock($session_id);
+            $stream->lock();
+            return $stream->__toString();
+        }catch (\Throwable $throwable){
+            throw $throwable;
+        } finally {
+            $stream->unlock();
+            $stream->close();
+            ChannelLock::getInstance()->unlock($session_id);
+            unset($this->contextArray['path']);
+            unset($this->contextArray['stream']);
+        }
     }
 
     public function write($session_id, $session_data)
