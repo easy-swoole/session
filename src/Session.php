@@ -4,7 +4,6 @@
 namespace EasySwoole\Session;
 
 
-use EasySwoole\Utility\Random;
 
 class Session
 {
@@ -18,20 +17,17 @@ class Session
         $this->timeout = $timeout;
     }
 
-    function create(?string $sessionId = null,float $timeout = null):?Context
+    function create(string $sessionId,float $timeout = null):?Context
     {
         if($timeout === null){
             $timeout = $this->timeout;
-        }
-        if(empty($sessionId)){
-            $sessionId = Random::makeUUIDV4();
         }
         if(!isset($this->context[$sessionId])){
             try{
                 if($this->handler->open($sessionId,$timeout)){
                     $this->context[$sessionId] = new Context($this->handler->read($sessionId,$timeout));
                 }else{
-                    return null;
+                    throw new Exception("fail to open sessionId {$sessionId}");
                 }
             }catch (\Throwable $exception){
                 unset($this->context[$sessionId]);
@@ -44,7 +40,7 @@ class Session
 
     function close(string $sessionId,float $timeout = null):?bool
     {
-        if(!isset($this->context[$sessionId])){
+        if(isset($this->context[$sessionId])){
             if($timeout === null){
                 $timeout = $this->timeout;
             }
