@@ -27,10 +27,16 @@ class Session
             $sessionId = Random::makeUUIDV4();
         }
         if(!isset($this->context[$sessionId])){
-            if($this->handler->open($sessionId,$timeout)){
-                $this->context[$sessionId] = new Context($this->handler->read($sessionId,$timeout));
-            }else{
-                return null;
+            try{
+                if($this->handler->open($sessionId,$timeout)){
+                    $this->context[$sessionId] = new Context($this->handler->read($sessionId,$timeout));
+                }else{
+                    return null;
+                }
+            }catch (\Throwable $exception){
+                unset($this->context[$sessionId]);
+                $this->close($sessionId,$timeout);
+                throw $exception;
             }
         }
         return $this->context[$sessionId];
@@ -42,7 +48,16 @@ class Session
             if($timeout === null){
                 $timeout = $this->timeout;
             }
-            return $this->handler->close($sessionId,$timeout);
+            try{
+                /** @var Context $context */
+                $context = $this->context[$sessionId];
+                $this->handler->write($sessionId,$context->allContext(),$timeout);
+            }catch (\Throwable $exception){
+                throw $exception;
+            } finally {
+                unset($this->context[$sessionId]);
+                return $this->handler->close($sessionId,$timeout);
+            }
         }
         return null;
     }
