@@ -43,4 +43,10 @@ class Context
     {
         return $this->data;
     }
+
+    function setData(array $data):Context
+    {
+        $this->data = $data;
+        return $this;
+    }
 }
